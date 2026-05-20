@@ -12,6 +12,10 @@ const env = import.meta.env;
 
 const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 const randomBetween = (min: number, max: number) => min + Math.random() * (max - min);
+const AI_MIN_ELAPSED_MS = 800;
+const AI_MAX_ELAPSED_MS = 1000;
+const AI_MODEL_TIMEOUT_MS = 650;
+const AI_STEP_MIN_GAP_MS = 110;
 
 const normalizePayload = (payload: Partial<AiPayload>, question: Question): AiPayload => {
   const fallbackOption = question.options.find((option) => option.id === question.correctOptionId);
@@ -70,7 +74,7 @@ const callModel = async (
     .join('\n');
 
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), 1500);
+  const timeoutId = window.setTimeout(() => controller.abort(), AI_MODEL_TIMEOUT_MS);
 
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
@@ -172,7 +176,7 @@ export const runAiAnalysis = async (
   onState: (state: Partial<AiState>) => void
 ): Promise<AiState> => {
   const startedAt = performance.now();
-  const targetElapsedMs = randomBetween(1800, 3600);
+  const targetElapsedMs = randomBetween(AI_MIN_ELAPSED_MS, AI_MAX_ELAPSED_MS);
   let source: AiState['source'] = 'model';
   let payload: AiPayload | null = null;
 
@@ -187,25 +191,28 @@ export const runAiAnalysis = async (
     payload = fallbackPayload(question);
   }
 
-  let lastRevealAt = performance.now() - 340;
+  let lastRevealAt = performance.now() - AI_STEP_MIN_GAP_MS;
   const revealAt = async (ratio: number, state: Partial<AiState>) => {
     const plannedAt = startedAt + targetElapsedMs * ratio;
-    const earliestSequentialAt = lastRevealAt + 340;
+    const earliestSequentialAt = lastRevealAt + AI_STEP_MIN_GAP_MS;
     const remainingMs = Math.max(plannedAt, earliestSequentialAt) - performance.now();
     if (remainingMs > 0) await sleep(remainingMs);
     onState(state);
     lastRevealAt = performance.now();
   };
 
-  await revealAt(0.3, { recognize: payload.recognize });
-  await revealAt(0.62, { judge: payload.judge });
-  await revealAt(0.9, {
+  await revealAt(0.28, { recognize: payload.recognize });
+  await revealAt(0.58, { judge: payload.judge });
+  await revealAt(0.86, {
     answer: payload.answer,
     logic: payload.logic.slice(0, 3),
     optionId: payload.optionId
   });
 
-  const elapsedMs = Math.min(3600, Math.max(1800, performance.now() - startedAt, targetElapsedMs));
+  const elapsedMs = Math.min(
+    AI_MAX_ELAPSED_MS,
+    Math.max(AI_MIN_ELAPSED_MS, performance.now() - startedAt, targetElapsedMs)
+  );
   const remainingMs = elapsedMs - (performance.now() - startedAt);
   if (remainingMs > 0) await sleep(remainingMs);
 

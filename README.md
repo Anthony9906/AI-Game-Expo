@@ -36,7 +36,7 @@ VITE_AI_API_KEY=your_api_key
 VITE_AI_MODEL=gpt-4.1-mini
 ```
 
-未配置 `VITE_AI_API_KEY` 时，应用会使用本地兜底内容流式演示，AI 会在 1.5-3 秒内完成答题，便于展会现场离线测试。
+AI 会在 0.8-1.0 秒内完成答题；未配置 `VITE_AI_API_KEY` 或模型接口响应较慢时，应用会使用本地兜底内容流式演示，便于展会现场离线测试。
 
 ## 题库
 
