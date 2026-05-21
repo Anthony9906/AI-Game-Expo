@@ -233,8 +233,8 @@ button {
 
 .briefing-content h2 {
   max-width: 670px;
-  font-size: clamp(36px, 3.35vw, 42px);
-  line-height: 1.18;
+  font-size: 52px;
+  line-height: 1.24;
 }
 
 .briefing-screen .progress-dots {
@@ -256,7 +256,7 @@ button {
   display: grid;
   gap: 14px;
   width: min(660px, 100%);
-  margin: 24px 0 24px;
+  margin: 32px 0 32px;
 }
 
 .info-box {
@@ -290,9 +290,9 @@ button {
   gap: 6px;
   margin: 0;
   color: #172c78;
-  font-size: clamp(12px, 1.08vw, 15px);
+  font-size: clamp(18px, 1.08vw, 20px);
   line-height: 1.14;
-  font-weight: 760;
+  font-weight: 460;
   white-space: nowrap;
 }
 
@@ -311,8 +311,8 @@ button {
   min-width: 166px;
   min-height: 54px;
   border-radius: 17px;
-  padding: 0 26px;
-  font-size: 28px;
+  padding: 6px 26px;
+  font-size: 42px;
 }
 
 .battle-screen {
@@ -390,7 +390,7 @@ button {
   border-radius: 999px;
   color: #0652e5;
   background: rgba(255, 255, 255, 0.86);
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 760;
   box-shadow: 0 8px 18px rgba(11, 73, 223, 0.06);
 }
@@ -408,7 +408,7 @@ button {
 .recommendation {
   border: 1px solid rgba(112, 151, 218, 0.32);
   border-radius: 18px;
-  background: rgba(242, 247, 255, 0.88);
+  background: rgb(232 239 249 / 88%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.74),
     0 16px 34px rgba(18, 61, 151, 0.08);
@@ -437,7 +437,7 @@ button {
 }
 
 .ai-panel {
-  background: rgba(241, 251, 244, 0.9);
+  background: rgb(231 246 236 / 90%);
   position: relative;
 }
 
@@ -496,7 +496,7 @@ button {
 .option-card strong {
   display: block;
   color: #101a5a;
-  font-size: 22px;
+  font-size: 26px;
   line-height: 1.24;
 }
 
@@ -504,7 +504,7 @@ button {
   display: block;
   margin-top: 7px;
   color: #6d7891;
-  font-size: 15px;
+  font-size: 18px;
   line-height: 1.25;
   font-weight: 650;
 }
@@ -605,7 +605,7 @@ button {
   gap: 10px;
   min-height: 72px;
   margin-top: 10px;
-  padding: 12px;
+  padding: 6px 12px;
   border: 1px solid rgba(22, 142, 50, 0.15);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.66);
@@ -613,21 +613,21 @@ button {
 
 .step-status {
   color: #0aae32;
-  padding-top: 2px;
+  padding-top: 6px;
 }
 
 .step-line strong {
   display: block;
   color: #13215c;
-  font-size: 17px;
+  font-size: 20px;
 }
 
 .step-line p {
   margin: 4px 0 0;
   color: #1d2a4b;
-  font-size: 15px;
+  font-size: 18px;
   line-height: 1.35;
-  font-weight: 620;
+  font-weight: 420;
 }
 
 .ai-ready-tag {
@@ -775,14 +775,13 @@ button {
   grid-template-columns: 24px 1fr;
   align-items: start;
   gap: 10px;
-  min-height: 42px;
-  padding: 10px 12px;
+  min-height: 34px;
+  padding: 6px 12px;
   border-radius: 12px;
-  background: rgba(249, 251, 255, 0.92);
   color: #111d5b;
-  font-size: 18px;
-  line-height: 1.32;
-  font-weight: 690;
+  font-size: 22px;
+  line-height: 0.9;
+  font-weight: 400;
 }
 
 .logic-item svg {
