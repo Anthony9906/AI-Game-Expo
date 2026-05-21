@@ -611,9 +611,23 @@ button {
   background: rgba(255, 255, 255, 0.66);
 }
 
+.step-line.active {
+  border-color: rgba(13, 99, 239, 0.28);
+  background: rgba(241, 247, 255, 0.9);
+  box-shadow: 0 10px 22px rgba(13, 99, 239, 0.08);
+}
+
 .step-status {
-  color: #0aae32;
+  color: rgba(19, 33, 92, 0.36);
   padding-top: 6px;
+}
+
+.step-line.active .step-status {
+  color: #155fe6;
+}
+
+.step-line.complete .step-status {
+  color: #0aae32;
 }
 
 .step-line strong {
@@ -628,6 +642,10 @@ button {
   font-size: 18px;
   line-height: 1.35;
   font-weight: 420;
+}
+
+.step-line:not(.active):not(.complete) p {
+  color: rgba(29, 42, 75, 0.58);
 }
 
 .ai-ready-tag {

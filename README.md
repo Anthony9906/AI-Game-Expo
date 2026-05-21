@@ -31,12 +31,18 @@ scripts/game-service.sh stop
 复制 `.env.example` 为 `.env`，配置 OpenAI-compatible 接口：
 
 ```bash
-VITE_AI_BASE_URL=https://api.openai.com/v1
+VITE_AI_BASE_URL=http://10.10.14.50:30000/v1
 VITE_AI_API_KEY=your_api_key
-VITE_AI_MODEL=gpt-4.1-mini
+VITE_AI_MODEL=Qwen3.6-35B
+VITE_AI_PROVIDER_NAME=expo-llm
+VITE_AI_STRUCTURED_OUTPUTS=true
+VITE_AI_DISABLE_THINKING=true
+VITE_AI_TIMEOUT_MS=8000
+VITE_AI_STREAMING=true
+VITE_AI_FORCE_LOCAL_FALLBACK=false
 ```
 
-AI 会在 0.8-1.0 秒内完成答题；未配置 `VITE_AI_API_KEY` 或模型接口响应较慢时，应用会使用本地兜底内容流式演示，便于展会现场离线测试。
+AI 使用 OpenAI-compatible 接口实时生成选型分析，并默认优先走流式响应；未配置 `VITE_AI_API_KEY`、模型接口超时、流式解析失败或结构化输出不可用时，应用会自动退回非流式模型调用，再不成功则使用本地兜底内容分步演示。`VITE_AI_DISABLE_THINKING=true` 用于当前 Qwen/SGLang 服务，避免模型先输出 reasoning 内容导致展会交互超时；`VITE_AI_TIMEOUT_MS` 可按现场网络延迟调整。若现场模型服务流式兼容性异常，可设置 `VITE_AI_STREAMING=false` 暂时关闭流式优先路径；若需要完全跳过模型请求，设置 `VITE_AI_FORCE_LOCAL_FALLBACK=true`，应用会直接使用题库内置的本地兜底内容。
 
 ## 题库
 
