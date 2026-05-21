@@ -116,7 +116,7 @@ button {
   width: min(1100px, 96vw);
   margin: 0;
   color: transparent;
-  font-size: 88px;
+  font-size: 82px;
   line-height: 1.16;
   text-align: center;
   font-weight: 860;
@@ -207,7 +207,7 @@ button {
   left: 64px;
   top: 51%;
   z-index: 3;
-  width: min(700px, 61%);
+  width: min(780px, 66%);
   transform: translateY(-44%);
   text-align: left;
 }
@@ -232,9 +232,18 @@ button {
 }
 
 .briefing-content h2 {
-  max-width: 670px;
-  font-size: 52px;
+  max-width: 740px;
+  font-size: 42px;
   line-height: 1.24;
+}
+
+.briefing-screen.visual-rail .briefing-content {
+  width: min(1040px, calc(100% - 96px));
+}
+
+.briefing-screen.visual-rail .briefing-content h2 {
+  max-width: none;
+  white-space: nowrap;
 }
 
 .briefing-screen .progress-dots {
@@ -521,21 +530,22 @@ button {
   mix-blend-mode: multiply;
 }
 
-.option-check {
-  color: #0d63ef;
-}
-
-.wrong-mark {
-  width: 24px;
-  height: 24px;
+.option-status {
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   border-radius: 999px;
   color: #fff;
-  background: #ff3333;
-  font-size: 22px;
-  line-height: 1;
-  font-weight: 900;
+  justify-self: end;
+}
+
+.option-status-correct {
+  background: #31a852;
+}
+
+.option-status-wrong {
+  background: #ff3b3b;
 }
 
 .wrong-hint {
@@ -1397,7 +1407,7 @@ button {
   .briefing-screen .briefing-content {
     left: 58px;
     top: 54%;
-    width: min(660px, 62%);
+    width: min(720px, 66%);
     transform: translateY(-44%);
   }
 
@@ -1411,7 +1421,7 @@ button {
   }
 
   .briefing-content h2 {
-    font-size: clamp(30px, 3.2vw, 36px);
+    font-size: clamp(36px, 3.2vw, 38px);
   }
 
   .info-grid {
@@ -1512,7 +1522,17 @@ button {
   }
 
   .briefing-content h2 {
-    font-size: 34px;
+    font-size: 32px;
+  }
+
+  .briefing-screen.visual-rail .briefing-content {
+    left: 32px;
+    right: 32px;
+    width: auto;
+  }
+
+  .briefing-screen.visual-rail .briefing-content h2 {
+    white-space: normal;
   }
 
   .info-box p {

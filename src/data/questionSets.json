@@ -9,32 +9,36 @@
         "prompt": "把陶瓷花瓣粘成一朵花，\n应该选哪种点胶阀？",
         "briefingPrompt": "",
         "scene": "",
-        "background": "陶瓷花瓣易碎；此胶阀用在点胶设备上；用热熔胶",
-        "requirement": "精准点胶、对花瓣无磕碰损伤（尽量不接触花瓣）、无溢胶拉丝",
+        "background": "陶瓷花瓣易碎；此胶阀用在点胶设备上，胶水为热熔胶",
+        "requirement": "精准点胶；对花瓣无磕碰损伤（尽量不接触花瓣）；无溢胶拉丝",
         "hintTags": ["不触碰花瓣", "精准点胶","不拉丝不溢胶"],
         "visual": "lotus",
         "domainLabel": "胶阀",
         "options": [
           {
             "id": "needle",
+            "prefix": "A",
             "label": "针式撞针阀",
             "description": "接触式、精度低、易拉丝",
             "visual": "valve"
           },
           {
             "id": "jet",
+            "prefix": "B",
             "label": "压电喷射阀",
             "description": "精度高、不拉丝、非接触",
             "visual": "valve"
           },
           {
             "id": "screw",
+            "prefix": "C",
             "label": "单组份螺杆阀",
             "description": "接触式、精度低、易溢胶",
             "visual": "valve"
           },
           {
             "id": "pneumatic",
+            "prefix": "D",
             "label": "气动喷射阀",
             "description": "精度中、非接触、出胶不稳定",
             "visual": "valve"
@@ -58,36 +62,36 @@
         "prompt": "手机微型螺丝高速对位组装，应该选哪种相机来识别螺丝及螺丝孔位？",
         "briefingPrompt": "",
         "scene": "",
-        "background": "需要快速识别并确认螺丝孔位置。",
-        "requirement": "识别黑色螺丝；高速拍摄；定位清晰无拖影；尽量成本低",
+        "background": "需要快速识别并确认螺丝孔位置",
+        "requirement": "识别黑色螺丝；高速拍摄；尽量成本低",
         "hintTags": [ "黑色螺丝", "速度快",  "控制成本"],
         "visual": "camera",
         "domainLabel": "相机模组",
         "options": [
           {
             "id": "mono-global-500",
-            "prefix": "1.",
+            "prefix": "A",
             "label": "黑白全局 500W 像素",
             "description": "对比明显, 速度快, 价格较低",
             "visual": "camera"
           },
           {
             "id": "color-global-2500",
-            "prefix": "2.",
+            "prefix": "B",
             "label": "彩色全局 2500W 像素",
             "description": "色彩识别，速度快，价格高",
             "visual": "camera"
           },
           {
             "id": "mono-rolling-500",
-            "prefix": "3.",
+            "prefix": "C",
             "label": "黑白非全局 500W 像素",
             "description": "速度偏慢，对比明显, 价格较低",
             "visual": "camera"
           },
           {
             "id": "color-rolling-2500",
-            "prefix": "4.",
+            "prefix": "D",
             "label": "彩色非全局 2500W 像素",
             "description": "速度偏慢，色彩清楚, 价格较高",
             "visual": "camera"
@@ -97,7 +101,7 @@
         "aiAnswer": "黑白全局 500W",
         "aiLogic": [
           "黑色螺丝更看重明暗对比，不需要彩色信息。",
-          "高速组装必须用全局快门，避免拖影。",
+          "高速组装图像抓拍必须快，避免拖影。",
           "500W 足够定位小螺丝孔，速度和成本更合适。"
         ],
         "aiSteps": {
@@ -111,36 +115,36 @@
         "prompt": "桌面型3D打印机，应该选哪种直线导轨？",
         "briefingPrompt": "",
         "scene": "",
-        "background": "打印头沿 水平/垂直 方向高速直线移动完成3D打印。",
-        "requirement": "打印位置重复度精准；运行顺滑阻力小；高速移动不晃动。",
+        "background": "打印头沿 水平/垂直 方向高速直线移动完成3D打印",
+        "requirement": "打印位置精准；运行顺滑阻力小；高速移动不晃动",
         "hintTags": ["高重复精度", "低阻顺滑", "高速移动稳定"],
         "visual": "rail",
         "domainLabel": "直线导轨",
         "options": [
           {
             "id": "round-rail",
-            "prefix": "A.",
+            "prefix": "A",
             "label": "普通圆轴滑轨",
             "description": "稳定性一般，精度中等，顺滑性一般",
             "visual": "rail"
           },
           {
             "id": "heavy-roller",
-            "prefix": "B.",
+            "prefix": "B",
             "label": "重载滚柱导轨",
             "description": "适合重载，体积偏大，稳定性高",
             "visual": "rail"
           },
           {
             "id": "plastic-slider",
-            "prefix": "C.",
+            "prefix": "C",
             "label": "塑料滑块导轨",
             "description": "轻便顺滑，精度低，稳定性低",
             "visual": "rail"
           },
           {
             "id": "mini-linear",
-            "prefix": "D.",
+            "prefix": "D",
             "label": "微型线性导轨",
             "description": "精度高，顺滑度好，稳定性高",
             "visual": "rail"

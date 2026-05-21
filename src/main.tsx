@@ -5,6 +5,7 @@ import confetti from 'canvas-confetti';
 import {
   Bot,
   Building2,
+  Check,
   CheckCircle2,
   ChevronRight,
   CircleDot,
@@ -13,6 +14,7 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
+  X,
   Zap
 } from 'lucide-react';
 import questionSets from './data/questionSets.json';
@@ -285,8 +287,16 @@ const OptionCard = ({
       </strong>
       <small>{option.description}</small>
     </span>
-    {isSelected && <CheckCircle2 className="option-check" size={20} />}
-    {isWrong && <span className="wrong-mark">×</span>}
+    {isSelected && (
+      <span className="option-status option-status-correct" aria-hidden="true">
+        <Check size={22} strokeWidth={4} />
+      </span>
+    )}
+    {isWrong && (
+      <span className="option-status option-status-wrong" aria-hidden="true">
+        <X size={22} strokeWidth={4} />
+      </span>
+    )}
   </button>
 );
 
@@ -458,7 +468,7 @@ function App() {
               <div className="soft-flower flower-left" />
               <div className="soft-flower flower-right" />
               <div className="welcome-copy">
-                <h1>Hi，想和 AI 比一比吗？</h1>
+                <h1>Hi! 想和 AI 比一比吗?</h1>
                 <p>体验 AI 如何理解工艺并推荐选型</p>
               </div>
               <div className="welcome-actions">
