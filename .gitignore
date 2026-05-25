@@ -7,3 +7,4 @@ vite.config.js
 .DS_Store
 .env
 records/*.md
+.memory/

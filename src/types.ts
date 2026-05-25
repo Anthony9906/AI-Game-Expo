@@ -45,6 +45,7 @@ export type AiState = {
   logic: string[];
   optionId: string | null;
   elapsedMs: number | null;
+  currentStep: AiStepKey | null;
   source: 'model' | 'fallback';
 };
 

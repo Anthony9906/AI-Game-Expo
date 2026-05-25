@@ -1,4 +1,7 @@
-import type { AiState, Question } from '../types';
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { generateText, Output, streamText } from "ai";
+import { z } from "zod";
+import type { AiState, AiStepKey, Question } from "../types";
 
 type AiPayload = {
   recognize: string;
@@ -10,142 +13,315 @@ type AiPayload = {
 
 const env = import.meta.env;
 
-const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
-const randomBetween = (min: number, max: number) => min + Math.random() * (max - min);
-const AI_MIN_ELAPSED_MS = 800;
-const AI_MAX_ELAPSED_MS = 1000;
-const AI_MODEL_TIMEOUT_MS = 650;
-const AI_STEP_MIN_GAP_MS = 110;
+const sleep = (ms: number) =>
+  new Promise((resolve) => window.setTimeout(resolve, ms));
+const randomBetween = (min: number, max: number) =>
+  min + Math.random() * (max - min);
+const AI_MIN_ELAPSED_MS = 2200;
+const AI_MAX_ELAPSED_MS = 3000;
+const DEFAULT_AI_MODEL_TIMEOUT_MS = 8000;
+const AI_STEP_MIN_GAP_MS = 650;
+const AI_STREAM_STEP_MIN_GAP_MS = 700;
+const TEXT_LIMIT = 46;
+const aiStepKeys = ["recognize", "judge", "answer"] as const;
 
-const normalizePayload = (payload: Partial<AiPayload>, question: Question): AiPayload => {
-  const fallbackOption = question.options.find((option) => option.id === question.correctOptionId);
-
-  return {
-    recognize: payload.recognize?.trim() || question.aiSteps.recognize,
-    judge: payload.judge?.trim() || question.aiSteps.judge,
-    answer: payload.answer?.trim() || question.aiSteps.answer,
-    logic:
-      payload.logic?.filter(Boolean).slice(0, 3) ||
-      question.aiLogic.slice(0, 3),
-    optionId:
-      question.options.some((option) => option.id === payload.optionId)
-        ? String(payload.optionId)
-        : fallbackOption?.id || question.correctOptionId
-  };
+type ModelSettings = {
+  apiKey: string;
+  baseURL: string;
+  model: string;
+  providerName: string;
+  structuredOutputs: boolean;
+  disableThinking: boolean;
+  timeoutMs: number;
+  streaming: boolean;
 };
 
-const getTaggedValue = (text: string, tag: string) => {
-  const closed = text.match(new RegExp(`<${tag}>\\s*([\\s\\S]*?)\\s*</${tag}>`, 'i'));
-  if (closed?.[1]) return closed[1].trim();
-
-  const open = text.match(new RegExp(`<${tag}>\\s*([\\s\\S]*)`, 'i'));
-  if (!open?.[1]) return '';
-
-  return open[1].replace(/<recognize>|<judge>|<answer>|<logic>|<item>|<optionId>[\s\S]*/i, '').trim();
+const parsePositiveInt = (value: string | undefined, fallback: number) => {
+  const parsed = Number.parseInt(value || "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
-const readPayloadFromTaggedText = (text: string): Partial<AiPayload> => {
-  const logicBlock = getTaggedValue(text, 'logic');
-  const logic = Array.from(logicBlock.matchAll(/<item>\s*([\s\S]*?)\s*<\/item>/gi))
-    .map((match) => match[1]?.trim())
-    .filter(Boolean);
+const shouldForceLocalFallback = () =>
+  env.VITE_AI_FORCE_LOCAL_FALLBACK === "true";
 
-  return {
-    recognize: getTaggedValue(text, 'recognize'),
-    judge: getTaggedValue(text, 'judge'),
-    answer: getTaggedValue(text, 'answer'),
-    logic,
-    optionId: getTaggedValue(text, 'optionId')
-  };
-};
+const aiSelectionSchema = z.object({
+  recognize: z
+    .string()
+    .describe("一句话识别当前工况的关键特征，适合展会大屏展示。"),
+  judge: z.string().describe("一句话判断最关键的选型约束。"),
+  answer: z.string().describe("一句话给出推荐结论，不要超过屏幕可读长度。"),
+  logic: z
+    .array(z.string())
+    .describe("三条简短判断逻辑，每条聚焦一个选型理由。"),
+  optionId: z.string().describe("最终推荐选项的 id，必须来自候选选项。"),
+});
 
-const callModel = async (
-  question: Question,
-  onState: (state: Partial<AiState>) => void
-): Promise<AiPayload | null> => {
+const getModelSettings = (): ModelSettings | null => {
   const apiKey = env.VITE_AI_API_KEY?.trim();
-  const baseUrl = env.VITE_AI_BASE_URL?.replace(/\/$/, '') || 'https://api.openai.com/v1';
-  const model = env.VITE_AI_MODEL?.trim() || 'gpt-4.1-mini';
+  const baseURL =
+    env.VITE_AI_BASE_URL?.replace(/\/$/, "") || "https://api.openai.com/v1";
+  const model = env.VITE_AI_MODEL?.trim() || "gpt-4.1-mini";
+  const providerName = env.VITE_AI_PROVIDER_NAME?.trim() || "expo-llm";
+  const structuredOutputs = env.VITE_AI_STRUCTURED_OUTPUTS !== "false";
+  const disableThinking = env.VITE_AI_DISABLE_THINKING === "true";
+  const timeoutMs = parsePositiveInt(
+    env.VITE_AI_TIMEOUT_MS,
+    DEFAULT_AI_MODEL_TIMEOUT_MS,
+  );
+  const streaming = env.VITE_AI_STREAMING !== "false";
 
-  if (!apiKey) return null;
+  if (!apiKey || !baseURL || !model) return null;
 
-  const optionList = question.options
-    .map((option) => `${option.id}: ${option.label} - ${option.description}`)
-    .join('\n');
+  return {
+    apiKey,
+    baseURL,
+    model,
+    providerName,
+    structuredOutputs,
+    disableThinking,
+    timeoutMs,
+    streaming,
+  };
+};
 
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), AI_MODEL_TIMEOUT_MS);
-
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    signal: controller.signal,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      messages: [
-        {
-          role: 'system',
-          content:
-            '你是展会现场的胶阀选型 AI。用简洁中文回答。必须按固定标签输出，不要 Markdown。格式为 <recognize>...</recognize><judge>...</judge><answer>...</answer><logic><item>...</item><item>...</item><item>...</item></logic><optionId>...</optionId>。logic 必须正好 3 条，optionId 必须来自给定选项。'
-        },
-        {
-          role: 'user',
-          content: `题目：${question.prompt}\n场景：${question.scene}\n选项：\n${optionList}`
-        }
-      ],
-      stream: true
-    })
+const createProvider = (settings: ModelSettings) =>
+  createOpenAICompatible({
+    name: settings.providerName,
+    apiKey: settings.apiKey,
+    baseURL: settings.baseURL,
+    supportsStructuredOutputs: settings.structuredOutputs,
   });
 
-  if (!response.ok || !response.body) {
-    window.clearTimeout(timeoutId);
+const getProviderOptions = (settings: ModelSettings) =>
+  settings.disableThinking
+    ? {
+        [settings.providerName]: {
+          chat_template_kwargs: {
+            enable_thinking: false,
+          },
+        },
+      }
+    : undefined;
+
+const trimText = (value: string, limit = TEXT_LIMIT) => {
+  const text = value.replace(/\s+/g, " ").trim();
+  if (text.length <= limit) return text;
+  return `${text.slice(0, limit - 1)}…`;
+};
+
+const normalizeLogic = (logic: unknown, question: Question) => {
+  const generated = Array.isArray(logic)
+    ? logic
+        .map((item) => (typeof item === "string" ? trimText(item) : ""))
+        .filter(Boolean)
+    : [];
+
+  const reference = question.aiLogic.map((item) => trimText(item));
+  const merged = [...generated, ...reference].filter(Boolean);
+  const unique = Array.from(new Set(merged));
+
+  return unique.slice(0, 3);
+};
+
+const getOptionLabel = (question: Question, optionId: string) =>
+  question.options.find((option) => option.id === optionId)?.label || optionId;
+
+const replaceOptionIds = (text: string, question: Question) =>
+  question.options.reduce(
+    (nextText, option) => nextText.replaceAll(option.id, option.label),
+    text,
+  );
+
+const normalizeAnswer = (
+  answer: string | undefined,
+  question: Question,
+  optionId: string,
+) => {
+  const label = getOptionLabel(question, optionId);
+  const text = trimText(answer || `推荐选择：${label}`);
+
+  return trimText(replaceOptionIds(text, question));
+};
+
+const normalizePayload = (
+  payload: Partial<AiPayload>,
+  question: Question,
+): AiPayload | null => {
+  if (
+    !payload.optionId ||
+    !question.options.some((option) => option.id === payload.optionId)
+  ) {
     return null;
   }
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let content = '';
+  const logic = normalizeLogic(payload.logic, question);
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+  return {
+    recognize: trimText(
+      replaceOptionIds(payload.recognize || question.aiSteps.recognize, question),
+    ),
+    judge: trimText(
+      replaceOptionIds(payload.judge || question.aiSteps.judge, question),
+    ),
+    answer: normalizeAnswer(payload.answer, question, payload.optionId),
+    logic:
+      logic.length === 3
+        ? logic
+        : question.aiLogic.slice(0, 3).map((item) => trimText(item)),
+    optionId: payload.optionId,
+  };
+};
 
-    const chunk = decoder.decode(value, { stream: true });
-    const lines = chunk
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.startsWith('data: '));
+const buildSystemPrompt = () => `你是展会现场的工业自动化选型 AI。
+你的任务是基于用户提供的题目事实、候选项、已验证正确答案和参考逻辑，生成适合互动大屏展示的 AI 分析过程。
+要求：
+1. 必须使用简洁中文，面向非专家观众也能读懂。
+2. 不引入题目外的工艺参数、品牌、价格或未经提供的事实。
+3. 输出要短，避免长句，适合 iPad 横屏展示。
+4. optionId 必须来自候选选项 id。
+5. 已验证正确答案是权威依据，通常应返回该 optionId；如果返回其他合法 optionId，必须是基于题目事实的判断。
+6. 只生成结构化 JSON 对象字段：recognize、judge、answer、logic、optionId。不要输出 Markdown、解释或思考过程。`;
 
-    for (const line of lines) {
-      const payload = line.slice(6);
-      if (payload === '[DONE]') continue;
+const buildUserPrompt = (question: Question) => {
+  const correctOption = question.options.find(
+    (option) => option.id === question.correctOptionId,
+  );
+  const optionList = question.options
+    .map((option) => `- ${option.id}: ${option.label}。${option.description}`)
+    .join("\n");
 
-      try {
-        const parsed = JSON.parse(payload) as {
-          choices?: Array<{ delta?: { content?: string } }>;
-        };
-        content += parsed.choices?.[0]?.delta?.content || '';
-      } catch {
-        continue;
-      }
-    }
+  return `请为当前展会互动题生成 AI 选型分析。
 
-    const partial = readPayloadFromTaggedText(content);
-    onState({
-      recognize: partial.recognize || undefined,
-      judge: partial.judge || undefined,
-      answer: partial.answer || undefined,
-      logic: partial.logic?.slice(0, 3)
-    });
+题目：
+${question.prompt}
+
+领域：
+${question.domainLabel}
+
+背景：
+${question.background || "无额外背景"}
+
+要求：
+${question.requirement}
+
+提示标签：
+${question.hintTags.join("、")}
+
+候选选项：
+${optionList}
+
+已验证正确答案：
+${question.correctOptionId}: ${correctOption?.label || question.aiAnswer}
+
+参考步骤：
+- 识别：${question.aiSteps.recognize}
+- 判断：${question.aiSteps.judge}
+- 匹配：${question.aiSteps.answer}
+
+参考判断逻辑：
+${question.aiLogic.map((item, index) => `${index + 1}. ${item}`).join("\n")}
+
+请严格生成以下字段：
+- recognize：一句话识别当前工况。
+- judge：一句话判断关键选型约束。
+- answer：一句话给出推荐结论，最好包含候选项名称。
+- logic：正好 3 条字符串，每条尽量短。
+- optionId：必须来自候选选项 id。`;
+};
+
+const callModel = async (question: Question): Promise<AiPayload | null> => {
+  const settings = getModelSettings();
+  if (!settings) return null;
+
+  const provider = createProvider(settings);
+
+  const result = await generateText({
+    model: provider.chatModel(settings.model),
+    system: buildSystemPrompt(),
+    prompt: buildUserPrompt(question),
+    output: Output.object({
+      schema: aiSelectionSchema,
+      name: "selectionAnalysis",
+      description: "展会互动选型题的结构化 AI 分析结果",
+    }),
+    temperature: 0.35,
+    // maxOutputTokens: 420,
+    maxRetries: 0,
+    timeout: settings.timeoutMs,
+    providerOptions: getProviderOptions(settings),
+  });
+
+  return normalizePayload(result.output, question);
+};
+
+const getPayloadStep = (payload: AiPayload, step: AiStepKey) => {
+  if (step === "recognize") return payload.recognize;
+  if (step === "judge") return payload.judge;
+  return payload.answer;
+};
+
+const callModelStream = async (
+  question: Question,
+  onState: (state: Partial<AiState>) => void,
+  publishedSteps: Set<AiStepKey>,
+): Promise<AiPayload | null> => {
+  const settings = getModelSettings();
+  if (!settings || !settings.streaming) return null;
+
+  const provider = createProvider(settings);
+  const result = streamText({
+    model: provider.chatModel(settings.model),
+    system: buildSystemPrompt(),
+    prompt: buildUserPrompt(question),
+    output: Output.object({
+      schema: aiSelectionSchema,
+      name: "selectionAnalysis",
+      description: "展会互动选型题的结构化 AI 分析结果",
+    }),
+    temperature: 0.35,
+    maxRetries: 0,
+    timeout: settings.timeoutMs,
+    providerOptions: getProviderOptions(settings),
+  });
+
+  let currentStepIndex = 0;
+  let lastStepChangedAt = performance.now();
+  const lastTexts: Partial<Record<AiStepKey, string>> = {};
+
+  const moveToStep = async (step: AiStepKey) => {
+    const nextStepIndex = aiStepKeys.indexOf(step);
+    if (nextStepIndex <= currentStepIndex) return;
+
+    const remainingMs =
+      AI_STREAM_STEP_MIN_GAP_MS - (performance.now() - lastStepChangedAt);
+    if (remainingMs > 0) await sleep(remainingMs);
+
+    currentStepIndex = nextStepIndex;
+    lastStepChangedAt = performance.now();
+    onState({ currentStep: step });
+  };
+
+  const publishStepText = async (step: AiStepKey, value: unknown) => {
+    if (typeof value !== "string" || !value.trim()) return;
+
+    await moveToStep(step);
+
+    const text = trimText(replaceOptionIds(value, question));
+    if (lastTexts[step] === text) return;
+
+    lastTexts[step] = text;
+    publishedSteps.add(step);
+    onState({ [step]: text, currentStep: step });
+  };
+
+  for await (const partial of result.partialOutputStream) {
+    const payload = partial as Partial<AiPayload>;
+    await publishStepText("recognize", payload.recognize);
+    await publishStepText("judge", payload.judge);
+    await publishStepText("answer", payload.answer);
   }
 
-  window.clearTimeout(timeoutId);
-
-  return normalizePayload(readPayloadFromTaggedText(content), question);
+  return normalizePayload((await result.output) as Partial<AiPayload>, question);
 };
 
 const fallbackPayload = (question: Question): AiPayload => ({
@@ -153,65 +329,81 @@ const fallbackPayload = (question: Question): AiPayload => ({
   judge: question.aiSteps.judge,
   answer: question.aiSteps.answer,
   logic: question.aiLogic.slice(0, 3),
-  optionId: question.correctOptionId
+  optionId: question.correctOptionId,
 });
-
-const streamText = async (
-  text: string,
-  onChunk: (value: string) => void,
-  minMs = 16
-) => {
-  let output = '';
-  const chars = Array.from(text);
-
-  for (const char of chars) {
-    output += char;
-    onChunk(output);
-    await sleep(minMs);
-  }
-};
 
 export const runAiAnalysis = async (
   question: Question,
-  onState: (state: Partial<AiState>) => void
+  onState: (state: Partial<AiState>) => void,
 ): Promise<AiState> => {
   const startedAt = performance.now();
   const targetElapsedMs = randomBetween(AI_MIN_ELAPSED_MS, AI_MAX_ELAPSED_MS);
-  let source: AiState['source'] = 'model';
+  let source: AiState["source"] = "model";
   let payload: AiPayload | null = null;
+  const publishedSteps = new Set<AiStepKey>();
 
-  try {
-    payload = await callModel(question, () => undefined);
-  } catch {
-    payload = null;
-  }
+  onState({ currentStep: "recognize" });
 
-  if (!payload) {
-    source = 'fallback';
+  if (shouldForceLocalFallback()) {
+    source = "fallback";
     payload = fallbackPayload(question);
+  } else {
+    try {
+      payload = await callModelStream(question, onState, publishedSteps);
+    } catch {
+      payload = null;
+    }
+
+    if (!payload) {
+      try {
+        payload = await callModel(question);
+      } catch {
+        payload = null;
+      }
+    }
+
+    if (!payload) {
+      source = "fallback";
+      payload = fallbackPayload(question);
+    }
   }
 
   let lastRevealAt = performance.now() - AI_STEP_MIN_GAP_MS;
   const revealAt = async (ratio: number, state: Partial<AiState>) => {
     const plannedAt = startedAt + targetElapsedMs * ratio;
     const earliestSequentialAt = lastRevealAt + AI_STEP_MIN_GAP_MS;
-    const remainingMs = Math.max(plannedAt, earliestSequentialAt) - performance.now();
+    const remainingMs =
+      Math.max(plannedAt, earliestSequentialAt) - performance.now();
     if (remainingMs > 0) await sleep(remainingMs);
     onState(state);
     lastRevealAt = performance.now();
   };
 
-  await revealAt(0.28, { recognize: payload.recognize });
-  await revealAt(0.58, { judge: payload.judge });
-  await revealAt(0.86, {
-    answer: payload.answer,
-    logic: payload.logic.slice(0, 3),
-    optionId: payload.optionId
+  const revealStep = async (
+    step: AiStepKey,
+    ratio: number,
+    state: Partial<AiState>,
+  ) => {
+    if (publishedSteps.has(step)) return;
+    onState({ currentStep: step });
+    await revealAt(ratio, state);
+    publishedSteps.add(step);
+  };
+
+  await revealStep("recognize", 0.28, {
+    recognize: getPayloadStep(payload, "recognize"),
+  });
+  await revealStep("judge", 0.58, {
+    judge: getPayloadStep(payload, "judge"),
+  });
+  await revealStep("answer", 0.86, {
+    answer: getPayloadStep(payload, "answer"),
   });
 
-  const elapsedMs = Math.min(
-    AI_MAX_ELAPSED_MS,
-    Math.max(AI_MIN_ELAPSED_MS, performance.now() - startedAt, targetElapsedMs)
+  const elapsedMs = Math.max(
+    AI_MIN_ELAPSED_MS,
+    performance.now() - startedAt,
+    targetElapsedMs,
   );
   const remainingMs = elapsedMs - (performance.now() - startedAt);
   if (remainingMs > 0) await sleep(remainingMs);
@@ -223,7 +415,8 @@ export const runAiAnalysis = async (
     logic: payload.logic.slice(0, 3),
     optionId: payload.optionId,
     elapsedMs,
-    source
+    currentStep: null,
+    source,
   };
 
   onState(finalState);

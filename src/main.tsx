@@ -20,7 +20,7 @@ import {
 import questionSets from './data/questionSets.json';
 import { runAiAnalysis } from './lib/aiClient';
 import { persistRecord } from './lib/records';
-import type { AiState, MatchRecord, Option, QuestionSet, Screen } from './types';
+import type { AiState, AiStepKey, MatchRecord, Option, QuestionSet, Screen } from './types';
 import './styles.css';
 
 const sets = questionSets as QuestionSet[];
@@ -34,6 +34,7 @@ const initialAiState: AiState = {
   logic: [],
   optionId: null,
   elapsedMs: null,
+  currentStep: null,
   source: 'fallback'
 };
 
@@ -300,15 +301,38 @@ const OptionCard = ({
   </button>
 );
 
-const StepLine = ({ title, text, complete }: { title: string; text: string; complete: boolean }) => (
-  <div className={`step-line ${complete ? 'complete' : ''}`}>
-    <span className="step-status">{complete ? <CheckCircle2 size={18} /> : <Loader2 size={18} className="spin" />}</span>
-    <div>
-      <strong>{title}</strong>
-      <p>{text || '正在生成...'}</p>
+const stepPlaceholders: Record<AiStepKey, string> = {
+  recognize: '正在提取工况特征...',
+  judge: '正在分析关键约束...',
+  answer: '正在匹配候选方案...'
+};
+
+const StepLine = ({
+  title,
+  stepKey,
+  text,
+  currentStep
+}: {
+  title: string;
+  stepKey: AiStepKey;
+  text: string;
+  currentStep: AiStepKey | null;
+}) => {
+  const complete = Boolean(text);
+  const active = !complete && currentStep === stepKey;
+
+  return (
+    <div className={`step-line ${complete ? 'complete' : ''} ${active ? 'active' : ''}`}>
+      <span className="step-status">
+        {complete ? <CheckCircle2 size={18} /> : active ? <Loader2 size={18} className="spin" /> : <CircleDot size={18} />}
+      </span>
+      <div>
+        <strong>{title}</strong>
+        <p>{text || stepPlaceholders[stepKey]}</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 function App() {
   const [screen, setScreen] = useState<Screen>('welcome');
@@ -324,6 +348,7 @@ function App() {
   const [isAiDone, setIsAiDone] = useState(false);
   const [record, setRecord] = useState<MatchRecord | null>(null);
   const runIdRef = useRef(0);
+  const battleLaunchLockRef = useRef(false);
   const completionKeyRef = useRef<string | null>(null);
 
   const selectedOption = useMemo(
@@ -400,6 +425,8 @@ function App() {
   }, [aiOption, aiState, isAiDone, isFinalQuestion, question, questionIndex, selectedOption, userAttemptCount, userElapsedMs]);
 
   const startBattle = () => {
+    if (battleLaunchLockRef.current) return;
+    battleLaunchLockRef.current = true;
     runIdRef.current += 1;
     const runId = runIdRef.current;
     completionKeyRef.current = null;
@@ -443,6 +470,7 @@ function App() {
 
   const goNextChallenge = () => {
     if (isFinalQuestion) return;
+    battleLaunchLockRef.current = false;
     runIdRef.current += 1;
     completionKeyRef.current = null;
     setQuestionIndex((index) => index + 1);
@@ -565,9 +593,9 @@ function App() {
                   <p className="done-count">
                     已完成 {Number(Boolean(aiState.recognize)) + Number(Boolean(aiState.judge)) + Number(Boolean(aiState.answer))} 项思考分析
                   </p>
-                  <StepLine title="识别" text={aiState.recognize} complete={Boolean(aiState.recognize)} />
-                  <StepLine title="判断" text={aiState.judge} complete={Boolean(aiState.judge)} />
-                  <StepLine title="匹配" text={aiState.answer} complete={Boolean(aiState.answer)} />
+                  <StepLine title="识别" stepKey="recognize" text={aiState.recognize} currentStep={aiState.currentStep} />
+                  <StepLine title="判断" stepKey="judge" text={aiState.judge} currentStep={aiState.currentStep} />
+                  <StepLine title="匹配" stepKey="answer" text={aiState.answer} currentStep={aiState.currentStep} />
                   <AnimatePresence>
                     {isAiDone && (
                       <motion.p

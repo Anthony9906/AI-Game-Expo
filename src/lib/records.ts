@@ -23,7 +23,7 @@ export const recordToMarkdown = (record: MatchRecord) => `# AI 选型闯关记�
 - 用时: ${(record.aiElapsedMs / 1000).toFixed(1)} 秒
 - 是否正确: ${record.aiCorrect ? '是' : '否'}
 
-## AI 固定流程
+## AI 分析流程
 
 ### 识别
 
