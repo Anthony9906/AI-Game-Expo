@@ -98,7 +98,10 @@ const thumbAssetByOptionId: Record<string, string> = {
   'round-rail': '/assets/generated-thumbnails/thumb-rail-round.png',
   'heavy-roller': '/assets/generated-thumbnails/thumb-rail-heavy.png',
   'plastic-slider': '/assets/generated-thumbnails/thumb-rail-plastic.png',
-  'mini-linear': '/assets/generated-thumbnails/thumb-rail-mini.png'
+  'mini-linear': '/assets/generated-thumbnails/thumb-rail-mini.png',
+  'roller-linear-guide': '/assets/generated-thumbnails/thumb-rail-heavy.png',
+  'drawer-slide': '/assets/generated-thumbnails/thumb-rail-mini.png',
+  'ball-linear-guide': '/assets/generated-thumbnails/thumb-rail-ball-linear.png'
 };
 
 const fireQuestionConfetti = () => {

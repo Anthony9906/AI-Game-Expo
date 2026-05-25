@@ -122,36 +122,36 @@
         "domainLabel": "直线导轨",
         "options": [
           {
-            "id": "round-rail",
+            "id": "roller-linear-guide",
             "prefix": "A",
-            "label": "普通圆轴滑轨",
-            "description": "顺滑度好、稳定性一般、精度中等",
-            "visual": "rail"
-          },
-          {
-            "id": "plastic-slider",
-            "prefix": "B",
-            "label": "高分子滑块导轨",
-            "description": "顺滑度中等、稳定性低、精度低",
-            "visual": "rail"
-          },
-          {
-            "id": "heavy-roller",
-            "prefix": "C",
             "label": "滚柱直线导轨",
-            "description": "精度高、顺滑度好、稳定性高",
+            "description": "精度高、稳定性好、顺滑度中等",
             "visual": "rail"
           },
           {
-            "id": "mini-linear",
-            "prefix": "D",
+            "id": "round-rail",
+            "prefix": "B",
+            "label": "圆轴滑轨",
+            "description": "顺滑度好、精度高、稳定性中等",
+            "visual": "rail"
+          },
+          {
+            "id": "drawer-slide",
+            "prefix": "C",
             "label": "抽屉滑轨",
             "description": "顺滑度好、稳定性中等、精度低",
             "visual": "rail"
+          },
+          {
+            "id": "ball-linear-guide",
+            "prefix": "D",
+            "label": "滚珠直线导轨",
+            "description": "稳定性好、精度高、顺滑度好",
+            "visual": "rail"
           }
         ],
-        "correctOptionId": "heavy-roller",
-        "aiAnswer": "滚柱直线导轨",
+        "correctOptionId": "ball-linear-guide",
+        "aiAnswer": "滚珠直线导轨",
         "aiLogic": [
           "层纹清晰依赖重复定位，导轨精度优先。",
           "顺滑度决定打印效率，低阻顺滑更适合。",
