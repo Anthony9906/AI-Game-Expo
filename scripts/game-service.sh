@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PORT="${PORT:-5173}"
+PORT="${PORT:-5174}"
 RUNTIME_DIR="$ROOT_DIR/.runtime"
 PID_FILE="$RUNTIME_DIR/game-service.pid"
 LOG_FILE="$RUNTIME_DIR/game-service.log"

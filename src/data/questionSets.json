@@ -125,28 +125,28 @@
             "id": "round-rail",
             "prefix": "A",
             "label": "普通圆轴滑轨",
-            "description": "稳定性一般，精度中等，顺滑度一般",
-            "visual": "rail"
-          },
-          {
-            "id": "heavy-roller",
-            "prefix": "B",
-            "label": "滚柱直线导轨",
-            "description": "精度高，顺滑度好，稳定性高",
+            "description": "顺滑度好、稳定性一般、精度中等",
             "visual": "rail"
           },
           {
             "id": "plastic-slider",
+            "prefix": "B",
+            "label": "高分子滑块导轨",
+            "description": "顺滑度中等、稳定性低、精度低",
+            "visual": "rail"
+          },
+          {
+            "id": "heavy-roller",
             "prefix": "C",
-            "label": "塑料滑块导轨",
-            "description": "轻便顺滑，精度低，稳定性低",
+            "label": "滚柱直线导轨",
+            "description": "精度高、顺滑度好、稳定性高",
             "visual": "rail"
           },
           {
             "id": "mini-linear",
             "prefix": "D",
             "label": "抽屉滑轨",
-            "description": "精度低，顺滑度一般，稳定性一般",
+            "description": "顺滑度好、稳定性中等、精度低",
             "visual": "rail"
           }
         ],
@@ -159,7 +159,7 @@
         ],
         "aiSteps": {
           "recognize": "层纹清晰依赖重复定位精度。",
-          "judge": "顺滑度决定打印效率。",
+          "judge": "顺滑度决定打印效率；稳定性高不会产生晃动",
           "answer": "匹配最合适导轨：已选定直线导轨类型。"
         }
       }
