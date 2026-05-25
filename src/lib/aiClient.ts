@@ -116,11 +116,7 @@ const normalizeLogic = (logic: unknown, question: Question) => {
         .filter(Boolean)
     : [];
 
-  const reference = question.aiLogic.map((item) => trimText(item));
-  const merged = [...generated, ...reference].filter(Boolean);
-  const unique = Array.from(new Set(merged));
-
-  return unique.slice(0, 3);
+  return generated.slice(0, 3);
 };
 
 const getOptionLabel = (question: Question, optionId: string) =>
@@ -173,19 +169,16 @@ const normalizePayload = (
 };
 
 const buildSystemPrompt = () => `你是展会现场的工业自动化选型 AI。
-你的任务是基于用户提供的题目事实、候选项、已验证正确答案和参考逻辑，生成适合互动大屏展示的 AI 分析过程。
+你的任务是只基于用户提供的题目事实和候选项，自行判断最合适的工业自动化选型，并生成适合互动大屏展示的分析过程。
 要求：
 1. 必须使用简洁中文，面向非专家观众也能读懂。
 2. 不引入题目外的工艺参数、品牌、价格或未经提供的事实。
 3. 输出要短，避免长句，适合 iPad 横屏展示。
 4. optionId 必须来自候选选项 id。
-5. 已验证正确答案是权威依据，通常应返回该 optionId；如果返回其他合法 optionId，必须是基于题目事实的判断。
+5. 不要假设存在标准答案；请根据背景、要求、提示标签和候选项描述独立选择。
 6. 只生成结构化 JSON 对象字段：recognize、judge、answer、logic、optionId。不要输出 Markdown、解释或思考过程。`;
 
 const buildUserPrompt = (question: Question) => {
-  const correctOption = question.options.find(
-    (option) => option.id === question.correctOptionId,
-  );
   const optionList = question.options
     .map((option) => `- ${option.id}: ${option.label}。${option.description}`)
     .join("\n");
@@ -209,17 +202,6 @@ ${question.hintTags.join("、")}
 
 候选选项：
 ${optionList}
-
-已验证正确答案：
-${question.correctOptionId}: ${correctOption?.label || question.aiAnswer}
-
-参考步骤：
-- 识别：${question.aiSteps.recognize}
-- 判断：${question.aiSteps.judge}
-- 匹配：${question.aiSteps.answer}
-
-参考判断逻辑：
-${question.aiLogic.map((item, index) => `${index + 1}. ${item}`).join("\n")}
 
 请严格生成以下字段：
 - recognize：一句话识别当前工况。

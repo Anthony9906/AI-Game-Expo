@@ -604,7 +604,7 @@ function App() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.98 }}
                       >
-                        我选好了，等你哦~
+                        {aiState.source === 'model' ? '真实模型已作答' : '本地兜底已作答'}
                       </motion.p>
                     )}
                   </AnimatePresence>
@@ -659,6 +659,9 @@ function App() {
                     AI 推荐：
                     <span>{record.aiOptionLabel}</span>
                   </h3>
+                  <p className="ai-source-note">
+                    来源：{record.aiSource === 'model' ? 'Qwen3.6-35B 真实模型' : '本地兜底模拟'}
+                  </p>
                   <h4>AI 的判断逻辑</h4>
                   <div className="logic-list">
                     {record.aiLogic.map((item) => (

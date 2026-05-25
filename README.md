@@ -24,7 +24,7 @@ scripts/game-service.sh restart
 scripts/game-service.sh stop
 ```
 
-脚本默认监听 `http://localhost:5173/`，日志写入 `.runtime/game-service.log`。
+脚本默认监听 `http://localhost:5174/`，日志写入 `.runtime/game-service.log`。
 
 ## 模型配置
 
