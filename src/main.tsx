@@ -602,7 +602,7 @@ function App() {
                 {isFinalQuestion ? (
                   <div className="result-top">
                     <ProgressDots currentIndex={questionIndex} />
-                    <h2>感谢参与，快去领取小礼品吧 🎉</h2>
+                    <h2>感谢体验，挑战已完成 🎉</h2>
                   </div>
                 ) : (
                   <div className="result-top">
