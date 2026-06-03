@@ -1,0 +1,22 @@
+{
+  "name": "AI 胶阀选型挑战",
+  "short_name": "AI 选型挑战",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#052e7a",
+  "theme_color": "#052e7a",
+  "icons": [
+    {
+      "src": "/assets/app-icons/ai-selection-challenge-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/app-icons/ai-selection-challenge-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
