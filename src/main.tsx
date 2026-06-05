@@ -37,6 +37,8 @@ const initialAiState: AiState = {
   source: 'fallback'
 };
 
+const optionPositionLabels = ['A', 'B', 'C', 'D'];
+
 const panelVariants = {
   initial: { opacity: 0, y: 16, scale: 0.992 },
   animate: { opacity: 1, y: 0, scale: 1 },
@@ -44,6 +46,17 @@ const panelVariants = {
 };
 
 const formatTime = (ms: number | null) => `${((ms || 0) / 1000).toFixed(1)}`;
+
+const shuffleOptions = (options: Option[]) => {
+  const shuffled = [...options];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+
+  return shuffled;
+};
 
 const createRecordId = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -264,12 +277,14 @@ const InfoBox = ({
 
 const OptionCard = ({
   option,
+  displayPrefix,
   isSelected,
   isWrong,
   onSelect,
   disabled
 }: {
   option: Option;
+  displayPrefix?: string;
   isSelected: boolean;
   isWrong: boolean;
   onSelect: () => void;
@@ -285,7 +300,7 @@ const OptionCard = ({
     </span>
     <span>
       <strong>
-        {option.prefix ? `${option.prefix} ` : ''}
+        {displayPrefix || option.prefix ? `${displayPrefix || option.prefix} ` : ''}
         {option.label}
       </strong>
       <small>{option.description}</small>
@@ -326,6 +341,7 @@ function App() {
   const [aiState, setAiState] = useState<AiState>(initialAiState);
   const [isAiDone, setIsAiDone] = useState(false);
   const [record, setRecord] = useState<MatchRecord | null>(null);
+  const [displayedOptions, setDisplayedOptions] = useState<Option[]>(() => shuffleOptions(question.options));
   const runIdRef = useRef(0);
   const completionKeyRef = useRef<string | null>(null);
 
@@ -414,6 +430,7 @@ function App() {
     setAiState(initialAiState);
     setIsAiDone(false);
     setRecord(null);
+    setDisplayedOptions(shuffleOptions(question.options));
     setTimerMs(0);
     const now = performance.now();
     setBattleStartedAt(now);
@@ -534,10 +551,11 @@ function App() {
                 <section className="choice-panel">
                   <h3>你的选择</h3>
                   <div className="options-list">
-                    {question.options.map((option) => (
+                    {displayedOptions.map((option, index) => (
                       <OptionCard
                         key={option.id}
                         option={option}
+                        displayPrefix={optionPositionLabels[index]}
                         isSelected={option.id === selectedOptionId}
                         isWrong={option.id === wrongOptionId}
                         onSelect={() => chooseOption(option.id)}
