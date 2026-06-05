@@ -406,10 +406,12 @@ button {
 
 .battle-grid {
   min-height: 0;
+  align-self: start;
   display: grid;
-  grid-template-columns: 1fr 0.92fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
   gap: 22px;
-  margin-top: 24px;
+  margin-top: clamp(48px, 7svh, 88px);
 }
 
 .choice-panel,
@@ -425,7 +427,9 @@ button {
 
 .choice-panel,
 .ai-panel {
-  min-height: 0;
+  min-height: clamp(500px, calc(100svh - 210px), 580px);
+  display: flex;
+  flex-direction: column;
   padding: 18px;
 }
 
@@ -435,7 +439,7 @@ button {
 
 .choice-panel h3,
 .ai-panel h3 {
-  margin: 0 0 16px;
+  margin: 0 0 22px;
   text-align: center;
   font-size: 31px;
   line-height: 1.12;
@@ -482,10 +486,16 @@ button {
     background 160ms ease;
 }
 
-.option-card:hover,
 .option-card.selected {
   border-color: #1a66f2;
   box-shadow: 0 14px 28px rgba(14, 88, 238, 0.16);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .option-card:hover {
+    border-color: #1a66f2;
+    box-shadow: 0 14px 28px rgba(14, 88, 238, 0.16);
+  }
 }
 
 .option-card.selected {
@@ -515,7 +525,7 @@ button {
   color: #6d7891;
   font-size: 18px;
   line-height: 1.25;
-  font-weight: 650;
+  font-weight: 500;
 }
 
 .option-icon {
@@ -549,11 +559,8 @@ button {
 }
 
 .wrong-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 18px;
-  translate: -50% 0;
-  margin: 0;
+  width: fit-content;
+  margin: auto auto 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -589,6 +596,7 @@ button {
   color: #14205a;
   font-size: 15px;
   font-weight: 850;
+  white-space: nowrap;
 }
 
 .thinking-dot {
@@ -641,11 +649,8 @@ button {
 }
 
 .ai-ready-tag {
-  position: absolute;
-  left: 50%;
-  bottom: 16px;
-  translate: -50% 0;
-  margin: 0;
+  width: fit-content;
+  margin: auto auto 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -668,26 +673,29 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 18px;
+  margin-top: 28px;
 }
 
 .timer-pill {
-  min-width: 150px;
-  min-height: 42px;
+  min-width: 178px;
+  min-height: 52px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 0 26px;
   border: 1px solid #d5e3fb;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.88);
   color: #172264;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 850;
   box-shadow: 0 10px 20px rgba(35, 88, 184, 0.08);
 }
 
 .timer-pill svg {
+  width: 22px;
+  height: 22px;
   color: #155fe6;
 }
 
@@ -864,24 +872,24 @@ button {
 .restart-button {
   position: fixed;
   left: 50%;
-  bottom: 18px;
+  bottom: 28px;
   z-index: 5;
   translate: -50% 0;
-  min-width: 190px;
-  min-height: 54px;
+  min-width: 380px;
+  min-height: 108px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0;
   border: 0;
-  border-radius: 18px;
+  border-radius: 34px;
   color: #fff;
   cursor: pointer;
   background: linear-gradient(180deg, #3486ff 0%, #0054ee 65%, #0041c9 100%);
   box-shadow:
-    0 14px 24px rgba(0, 78, 230, 0.18),
-    inset 0 2px 0 rgba(255, 255, 255, 0.48);
-  font-size: 22px;
+    0 22px 36px rgba(0, 78, 230, 0.2),
+    inset 0 3px 0 rgba(255, 255, 255, 0.48);
+  font-size: 44px;
   font-weight: 850;
 }
 
@@ -1464,18 +1472,106 @@ button {
     margin-top: 16px;
   }
 
+  .choice-panel,
+  .ai-panel {
+    min-height: clamp(360px, calc(100svh - 180px), 470px);
+    padding: 14px;
+  }
+
+  .choice-panel h3,
+  .ai-panel h3 {
+    font-size: 29px;
+    margin-bottom: 18px;
+  }
+
+  .options-list {
+    gap: 8px;
+  }
+
   .option-card {
-    min-height: 72px;
+    min-height: 64px;
+    grid-template-columns: 48px 1fr 24px;
+    gap: 10px;
+    padding: 7px 12px;
+  }
+
+  .option-card strong {
+    font-size: 23px;
+    line-height: 1.14;
+  }
+
+  .option-card small {
+    margin-top: 5px;
+    font-size: 16px;
+    line-height: 1.18;
+  }
+
+  .mini-asset {
+    width: 40px;
+    height: 40px;
   }
 
   .bot-box {
-    width: 88px;
-    min-height: 88px;
+    width: 68px;
+    min-height: 68px;
+    margin-bottom: 8px;
+  }
+
+  .bot-box svg {
+    width: 42px;
+    height: 42px;
+  }
+
+  .bot-box span {
+    font-size: 14px;
+  }
+
+  .done-count {
+    font-size: 16px;
+    margin-bottom: 8px;
   }
 
   .step-line {
-    min-height: 62px;
-    margin-top: 8px;
+    min-height: 48px;
+    margin-top: 6px;
+    padding: 4px 10px;
+  }
+
+  .step-status {
+    padding-top: 4px;
+  }
+
+  .step-line strong {
+    font-size: 18px;
+    line-height: 1.12;
+  }
+
+  .step-line p {
+    margin-top: 3px;
+    font-size: 16px;
+    line-height: 1.18;
+  }
+
+  .ai-ready-tag {
+    min-height: 30px;
+    font-size: 14px;
+  }
+
+  .battle-footer {
+    margin-top: 20px;
+  }
+
+  .timer-pill {
+    min-width: 150px;
+    min-height: 42px;
+    gap: 8px;
+    padding: 0 18px;
+    font-size: 18px;
+  }
+
+  .timer-pill svg {
+    width: 18px;
+    height: 18px;
   }
 
   .result-screen {

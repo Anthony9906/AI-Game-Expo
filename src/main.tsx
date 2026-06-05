@@ -549,7 +549,7 @@ function App() {
 
               <div className="battle-grid">
                 <section className="choice-panel">
-                  <h3>你的选择</h3>
+                  <h3>您的选择</h3>
                   <div className="options-list">
                     {displayedOptions.map((option, index) => (
                       <OptionCard
